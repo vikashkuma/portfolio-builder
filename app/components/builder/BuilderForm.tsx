@@ -155,7 +155,7 @@ export default function BuilderForm() {
           institution: edu.institution,
           degree: edu.degree,
           field: edu.field,
-          description: edu.description,
+          description: edu.description || '',
           school: edu.institution,
           period: `${edu.startDate} - ${edu.endDate}`,
           startDate: new Date(edu.startDate),

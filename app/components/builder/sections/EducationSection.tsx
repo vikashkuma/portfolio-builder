@@ -31,10 +31,13 @@ const FIELD_OPTIONS = [
   'Computer Science', 'Business', 'Engineering', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Psychology', 'Other'
 ];
 
-interface Education extends PortfolioEducation {
+interface Education {
   id: string;
   school: string;
+  degree: string;
+  field: string;
   period: string;
+  description: string;
   startDate?: Date | null;
   endDate?: Date | null;
   otherDegreeText?: string;
@@ -601,7 +604,7 @@ export const EducationSection = ({ onUpdate, initialData }: EducationSectionProp
             <div>
               <label htmlFor={`field-${id}`} className="block text-sm font-medium text-foreground flex items-center gap-2">
                 Field of Study
-                <Button size="xs" variant="outline" className="ml-2 flex items-center gap-1" onClick={() => handleAISuggestField(education.id)} disabled={aiLoading[education.id]?.field || !education.school.trim() || !(education.degree === 'Other' ? education.otherDegreeText?.trim() : education.degree.trim())}>
+                <Button size="sm" variant="outline" className="ml-2 flex items-center gap-1" onClick={() => handleAISuggestField(education.id)} disabled={aiLoading[education.id]?.field || !education.school.trim() || !(education.degree === 'Other' ? education.otherDegreeText?.trim() : education.degree.trim())}>
                   {aiLoading[education.id]?.field ? (
                     <><FaRobot className="animate-spin" /> Loading...</>
                   ) : 'Generate with AI'}
@@ -726,7 +729,7 @@ export const EducationSection = ({ onUpdate, initialData }: EducationSectionProp
                 <span className="text-sm text-foreground/60 ml-2">
                   ({education.description.length}/1000 characters)
                 </span>
-                <Button size="xs" variant="outline" className="ml-2 flex items-center gap-1" onClick={() => handleGenerateAI(education.id)} disabled={isGenerating || !education.school.trim() || !(education.degree === 'Other' ? education.otherDegreeText?.trim() : education.degree.trim()) || !(education.field === 'Other' ? education.otherFieldText?.trim() : education.field.trim())}>
+                <Button size="sm" variant="outline" className="ml-2 flex items-center gap-1" onClick={() => handleGenerateAI(education.id)} disabled={isGenerating || !education.school.trim() || !(education.degree === 'Other' ? education.otherDegreeText?.trim() : education.degree.trim()) || !(education.field === 'Other' ? education.otherFieldText?.trim() : education.field.trim())}>
                   {isGenerating ? (
                     <><FaRobot className="animate-spin" /> Loading...</>
                   ) : 'Generate with AI'}

@@ -123,98 +123,68 @@ export const enhanceContent = async (
   return mockAIResponses[section](content);
 };
 
-// MCP Server configuration
-const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'http://localhost:3001';
+// API configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 export const generateContent = async (section: string, input: string): Promise<string> => {
-  try {
-    // Try MCP server first
-    const response = await fetch(`${MCP_SERVER_URL}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        section, 
-        input,
-        context: { timestamp: Date.now() }
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success && data.data?.content) {
-        return data.data.content;
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  
+  // Use mock responses directly
+  const mockResponse = mockAIResponses[section as PortfolioStep]?.(input);
+  if (mockResponse?.content) {
+    if ('bio' in mockResponse.content && mockResponse.content.bio) {
+      return mockResponse.content.bio;
+    }
+    if ('description' in mockResponse.content && typeof mockResponse.content.description === 'string') {
+      return mockResponse.content.description;
+    }
+    if (Array.isArray(mockResponse.content) && mockResponse.content.length > 0) {
+      const firstItem = mockResponse.content[0];
+      if (firstItem && 'description' in firstItem && firstItem.description) {
+        return firstItem.description;
       }
     }
-
-    // Fallback to mock responses if MCP server is not available
-    console.warn('MCP server not available, using mock responses');
-    const mockResponse = mockAIResponses[section as PortfolioStep]?.(input);
-    if (mockResponse?.content) {
-      if ('bio' in mockResponse.content && mockResponse.content.bio) {
-        return mockResponse.content.bio;
-      }
-      if ('description' in mockResponse.content && typeof mockResponse.content.description === 'string') {
-        return mockResponse.content.description;
-      }
-    }
-    return input;
-
-  } catch (error) {
-    console.error('Error calling MCP server:', error);
-    
-    // Fallback to mock responses
-    const mockResponse = mockAIResponses[section as PortfolioStep]?.(input);
-    if (mockResponse?.content) {
-      if ('bio' in mockResponse.content && mockResponse.content.bio) {
-        return mockResponse.content.bio;
-      }
-      if ('description' in mockResponse.content && typeof mockResponse.content.description === 'string') {
-        return mockResponse.content.description;
-      }
-    }
-    return input;
   }
+  return input;
 };
 
 // New function to get available models
 export const getAvailableModels = async () => {
-  try {
-    const response = await fetch(`${MCP_SERVER_URL}/models`);
-    if (response.ok) {
-      const data = await response.json();
-      return data;
-    }
-  } catch (error) {
-    console.error('Error getting available models:', error);
-  }
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
   
   return {
-    success: false,
-    models: [],
-    current: null
+    success: true,
+    models: [
+      {
+        name: 'mock-model',
+        provider: 'mock',
+        available: true,
+        cost: undefined,
+        config: {
+          temperature: 0.7,
+          maxTokens: 500
+        }
+      }
+    ],
+    current: {
+      name: 'mock-model',
+      provider: 'mock'
+    }
   };
 };
 
 // New function to switch models
 export const switchModel = async (provider: string, config?: any) => {
-  try {
-    const response = await fetch(`${MCP_SERVER_URL}/switch-model`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ provider, config }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data;
-    }
-  } catch (error) {
-    console.error('Error switching model:', error);
-  }
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
   
-  return { success: false };
+  return { 
+    success: true,
+    model: {
+      name: 'mock-model',
+      provider: 'mock'
+    }
+  };
 };
