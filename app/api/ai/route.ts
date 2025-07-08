@@ -87,41 +87,187 @@ const mockAIResponses: Record<PortfolioStep, (input: string) => AIResponse> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { section, input } = await request.json();
+    const body = await request.json();
+    const { action, section, input, provider, config } = body;
 
-    if (!section || !input) {
-      return NextResponse.json(
-        { error: 'Missing required fields: section and input' },
-        { status: 400 }
-      );
+    // Handle different actions
+    switch (action) {
+      case 'generate_content':
+        return await handleGenerateContent(section, input);
+      case 'get_available_models':
+        return await handleGetAvailableModels();
+      case 'switch_model':
+        return await handleSwitchModel(provider, config);
+      default:
+        // Legacy support for direct content generation
+        if (section && input) {
+          return await handleGenerateContent(section, input);
+        }
+        return NextResponse.json(
+          { error: 'Invalid action or missing required fields' },
+          { status: 400 }
+        );
     }
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const mockResponse = mockAIResponses[section as PortfolioStep]?.(input);
-    
-    if (!mockResponse) {
-      return NextResponse.json(
-        { error: 'Invalid section' },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: mockResponse
-    });
 
   } catch (error) {
-    console.error('AI generation error:', error);
+    console.error('AI API error:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to generate content',
+        error: 'Failed to process request',
         message: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
+  }
+}
+
+async function handleGenerateContent(section: string, input: string) {
+  if (!section || !input) {
+    return NextResponse.json(
+      { error: 'Missing required fields: section and input' },
+      { status: 400 }
+    );
+  }
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  const mockResponse = mockAIResponses[section as PortfolioStep]?.(input);
+  
+  if (!mockResponse) {
+    return NextResponse.json(
+      { error: 'Invalid section' },
+      { status: 400 }
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: mockResponse
+  });
+}
+
+async function handleGetAvailableModels() {
+  try {
+    // Try to connect to MCP server
+    const mcpServerUrl = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'http://localhost:3001';
+    
+    const response = await fetch(`${mcpServerUrl}/models`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return NextResponse.json({
+        success: true,
+        models: data.models || [],
+        current: data.current || null
+      });
+    } else {
+      // Fallback to mock data if MCP server is not available
+      return NextResponse.json({
+        success: true,
+        models: [
+          {
+            name: 'mock-model',
+            provider: 'mock',
+            available: true,
+            cost: null,
+            error: 'MCP server not available'
+          },
+          {
+            name: 'ollama-model',
+            provider: 'ollama',
+            available: false,
+            cost: null,
+            error: 'Ollama not running or not configured'
+          },
+          {
+            name: 'openai-model',
+            provider: 'openai',
+            available: false,
+            cost: null,
+            error: 'OpenAI API key not configured'
+          }
+        ],
+        current: {
+          name: 'mock-model',
+          provider: 'mock'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    // Fallback to mock data
+    return NextResponse.json({
+      success: true,
+      models: [
+        {
+          name: 'mock-model',
+          provider: 'mock',
+          available: true,
+          cost: null,
+          error: 'MCP server not available'
+        },
+        {
+          name: 'ollama-model',
+          provider: 'ollama',
+          available: false,
+          cost: null,
+          error: 'Ollama not running or not configured'
+        },
+        {
+          name: 'openai-model',
+          provider: 'openai',
+          available: false,
+          cost: null,
+          error: 'OpenAI API key not configured'
+        }
+      ],
+      current: {
+        name: 'mock-model',
+        provider: 'mock'
+      }
+    });
+  }
+}
+
+async function handleSwitchModel(provider: string, config?: any) {
+  try {
+    const mcpServerUrl = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'http://localhost:3001';
+    
+    const response = await fetch(`${mcpServerUrl}/switch-model`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider,
+        config
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return NextResponse.json({
+        success: true,
+        model: data.model || { name: 'mock-model', provider: 'mock' }
+      });
+    } else {
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to switch model'
+      });
+    }
+  } catch (error) {
+    console.error('Error switching model:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to switch model'
+    });
   }
 }
 

@@ -14,6 +14,9 @@ import { ContactSection } from '../../components/builder/sections/ContactSection
 
 import { PortfolioPreview } from '../../components/builder/PortfolioPreview';
 import Button from '../../components/ui/Button';
+import { downloadPortfolioAsPDFFile, downloadPortfolioAsHTML, downloadPortfolioAsJSON } from '../../utils/portfolioExport';
+import { toast } from 'react-hot-toast';
+import { FaFilePdf, FaFileCode, FaFileAlt } from 'react-icons/fa';
 
 const steps = [
   { id: 1, key: 'about', title: 'About', description: 'Basic information' },
@@ -59,6 +62,49 @@ export default function BuilderSectionPage() {
   const handleNext = () => {
     if (stepIndex < steps.length - 1) {
       router.push(`/builder/${steps[stepIndex + 1].key}`);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (portfolio) {
+      try {
+        toast.loading('Generating PDF...', { id: 'pdf-generation' });
+        await downloadPortfolioAsPDFFile(portfolio);
+        toast.success('Portfolio downloaded as PDF!', { id: 'pdf-generation' });
+      } catch (error) {
+        console.error('Error downloading PDF:', error);
+        toast.error('Failed to download PDF. Please try again.', { id: 'pdf-generation' });
+      }
+    } else {
+      toast.error('No portfolio data available to download.');
+    }
+  };
+
+  const handleDownloadHTML = () => {
+    if (portfolio) {
+      try {
+        downloadPortfolioAsHTML(portfolio);
+        toast.success('Portfolio downloaded as HTML!');
+      } catch (error) {
+        console.error('Error downloading HTML:', error);
+        toast.error('Failed to download HTML. Please try again.');
+      }
+    } else {
+      toast.error('No portfolio data available to download.');
+    }
+  };
+
+  const handleDownloadJSON = () => {
+    if (portfolio) {
+      try {
+        downloadPortfolioAsJSON(portfolio);
+        toast.success('Portfolio downloaded as JSON!');
+      } catch (error) {
+        console.error('Error downloading JSON:', error);
+        toast.error('Failed to download JSON. Please try again.');
+      }
+    } else {
+      toast.error('No portfolio data available to download.');
     }
   };
 
@@ -125,10 +171,25 @@ export default function BuilderSectionPage() {
                 <PortfolioPreview portfolioData={portfolio || {}} theme={theme} device={device} />
               </div>
               
+              {/* Download Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Download Your Portfolio</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Choose your preferred format to download your portfolio:
+                </p>
+              </div>
+              
               {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button onClick={handleBack} variant="outline">Back</Button>
-                <Button onClick={handleNext}>Finish</Button>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button onClick={handleDownloadPDF} variant="primary" leftIcon={<FaFilePdf />}>Download PDF</Button>
+                  <Button onClick={handleDownloadHTML} variant="secondary" leftIcon={<FaFileCode />}>Download HTML</Button>
+                  <Button onClick={handleDownloadJSON} variant="outline" leftIcon={<FaFileAlt />}>Download JSON</Button>
+                </div>
+                <div className="flex justify-between">
+                  <Button onClick={handleBack} variant="outline">Back</Button>
+                  <Button onClick={() => router.push('/builder/about')} variant="outline">Edit Portfolio</Button>
+                </div>
               </div>
             </div>
           ) : SectionComponent ? (

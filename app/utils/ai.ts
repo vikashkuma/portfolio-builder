@@ -151,40 +151,81 @@ export const generateContent = async (section: string, input: string): Promise<s
 
 // New function to get available models
 export const getAvailableModels = async () => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  
-  return {
-    success: true,
-    models: [
-      {
-        name: 'mock-model',
-        provider: 'mock',
-        available: true,
-        cost: undefined,
-        config: {
-          temperature: 0.7,
-          maxTokens: 500
-        }
-      }
-    ],
-    current: {
-      name: 'mock-model',
-      provider: 'mock'
+  try {
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'get_available_models'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch models');
     }
-  };
+
+    const data = await response.json();
+    return {
+      success: true,
+      models: data.models || [],
+      current: data.current || null
+    };
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    // Fallback to mock data
+    return {
+      success: true,
+      models: [
+        {
+          name: 'mock-model',
+          provider: 'mock',
+          available: true,
+          cost: undefined,
+          error: 'MCP server not available'
+        }
+      ],
+      current: {
+        name: 'mock-model',
+        provider: 'mock'
+      }
+    };
+  }
 };
 
 // New function to switch models
 export const switchModel = async (provider: string, config?: any) => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  
-  return { 
-    success: true,
-    model: {
-      name: 'mock-model',
-      provider: 'mock'
+  try {
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'switch_model',
+        provider,
+        config
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to switch model');
     }
-  };
+
+    const data = await response.json();
+    return {
+      success: true,
+      model: data.model || {
+        name: 'mock-model',
+        provider: 'mock'
+      }
+    };
+  } catch (error) {
+    console.error('Error switching model:', error);
+    return {
+      success: false,
+      error: 'Failed to switch model'
+    };
+  }
 };
